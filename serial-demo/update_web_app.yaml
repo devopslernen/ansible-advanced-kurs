@@ -1,0 +1,53 @@
+---
+- name: Update webapp in loadbalancing setup
+  hosts: web-servers
+  become: true
+  serial: 1
+
+  vars:
+    backend_name: demo-webapp
+    doc_root: "/var/www/html"
+
+  tasks:
+    - name: Remove host IP from nginx load balancing config
+      delegate_to: loadbalancer
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "server {{ hostvars[inventory_hostname].ansible_host }};"
+        state: absent
+
+    - name: Reload nginx config on loadbalancer
+      delegate_to: loadbalancer
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+    - name: Ensure document root directory exists
+      ansible.builtin.file:
+        path: "{{ doc_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate custom HTML page using Jinja2 template
+      ansible.builtin.template:
+        src: index.html.j2
+        dest: "{{ doc_root }}/index.html"
+        mode: '0644'
+
+    - name: Wait for 60 seconds to test the loadbalacing setup
+      delegate_to: localhost
+      ansible.builtin.wait_for:
+        timeout: 60
+
+    - name: Add host IP back to nginx load balancing config
+      delegate_to: loadbalancer
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/nginx.conf
+        line: "    server {{ hostvars[inventory_hostname].ansible_host }};"
+        insertafter: 'upstream {{ backend_name }} {'
+
+    - name: Reload nginx config on loadbalancer
+      delegate_to: loadbalancer
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

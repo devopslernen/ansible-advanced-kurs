@@ -1,0 +1,41 @@
+---
+- name: Install and configure nginx load balancer
+  hosts: loadbalancers
+  become: true
+  vars:
+    backend_name: demo-webapp
+    nginx_remove_default_vhost: true
+    nginx_upstreams:
+      - name: "{{ backend_name }}"
+        # strategy: "ip_hash" # default: round robin
+        servers:
+          - "10.0.3.101"
+          - "10.0.3.102"
+
+  roles:
+    - { role: geerlingguy.nginx }
+  tasks:
+    - name: Add custom nginx load balancer config
+      ansible.builtin.copy:
+        dest: /etc/nginx/conf.d/custom_loadbalancer.conf
+        mode: "0644"
+        content: |
+          server {
+            location / {
+                proxy_pass http://{{ backend_name }};
+            }
+
+            # Chromium-based browsers also request /favicon.ico by default.
+            # Ensure round-robin loadbalancer behavior if no favicon exists.
+            location = /favicon.ico {
+              log_not_found off;
+            }
+          }
+      notify:
+        - Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostname Information</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            margin-top: 20%;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            margin: 0;
+        }
+        .web-host-list {
+            margin-top: 30px;
+        }
+        .web-host-item {
+            margin: 10px;
+        }
+        a {
+            color: #00ccff;
+            text-decoration: none;
+        }
+        .globe-icon {
+            margin-left: 10px;
+            font-size: 36px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello from {{ ansible_hostname }}</h1>
+
+    <div class="web-host-list">
+        <h2>All Web Hosts:</h2>
+        {% for host in ansible_play_hosts %}
+            {% if host.startswith('web') %}
+                <div class="web-host-item">
+                    <a href="http://{{ hostvars[host].ansible_default_ipv4.address }}" target="_blank">
+                        {{ host }}
+                        &#127760; <!-- Unicode globe symbol -->
+                    </a>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</body>
+</html>

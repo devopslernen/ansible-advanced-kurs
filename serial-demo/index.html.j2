@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostname Information V2</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            margin-top: 20%;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            margin: 0;
+        }
+        .web-host-list {
+            margin-top: 30px;
+        }
+        .web-host-item {
+            margin: 10px;
+        }
+        a {
+            color: #00ccff;
+            text-decoration: none;
+        }
+        .globe-icon {
+            margin-left: 10px;
+            font-size: 36px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <h1>HELLO FROM PATCHED NODE "{{ ansible_hostname }}"</h1>
+</body>
+</html>
