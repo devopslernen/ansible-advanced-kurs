@@ -1,0 +1,5 @@
+- name: Install nginx
+  hosts: web-servers
+  become: true
+  roles:
+    - { role: geerlingguy.nginx }

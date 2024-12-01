@@ -1,0 +1,11 @@
+server {
+    location / {
+        proxy_pass http://{{ backend_name }};
+    }
+
+    # Chromium-based browsers also request /favicon.ico by default.
+    # Ensure round-robin loadbalancer behavior if no favicon exists.
+    location = /favicon.ico {
+        log_not_found off;
+    }
+}

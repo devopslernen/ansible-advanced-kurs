@@ -1,0 +1,13 @@
+[all:vars]
+ansible_ssh_private_key_file=/home/rec/.ssh/id_rsa
+ansible_user=ansible
+
+[loadbalancers]
+loadbalancer ansible_host=10.0.3.100
+
+[web-servers]
+web1 ansible_host=10.0.3.101
+web2 ansible_host=10.0.3.102
+
+[db-servers]
+db ansible_host=10.0.3.103

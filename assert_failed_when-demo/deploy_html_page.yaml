@@ -1,0 +1,37 @@
+---
+- name: Deploy custom HTML page for nginx
+  hosts: web-servers
+  become: true
+
+  vars:
+    doc_root: "/var/www/html"
+
+  tasks:
+    - name: Gather installed package facts
+      ansible.builtin.package_facts:
+
+    - name: Assert that Nginx is installed
+      ansible.builtin.assert:
+        that:
+          - "'nginx' in ansible_facts.packages"
+        fail_msg: "Nginx is not installed on {{ ansible_host }}."
+        success_msg: "Nginx is successfully installed on {{ ansible_host }}."
+
+    - name: Ensure document root directory exists
+      ansible.builtin.file:
+        path: "{{ doc_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate custom HTML page using Jinja2 template
+      ansible.builtin.template:
+        src: index.html.j2
+        dest: "{{ doc_root }}/index.html"
+        mode: '0644'
+
+    - name: Check if the custom HTML page is accessible
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}"
+        return_content: false
+      register: webpage_response
+      failed_when: webpage_response.status != 200

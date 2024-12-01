@@ -1,0 +1,21 @@
+---
+- name: Deploy custom HTML page for nginx
+  hosts: web-servers
+  become: true
+
+  vars:
+    doc_root: "/var/www/html"
+
+  tasks:
+
+    - name: Ensure document root directory exists
+      ansible.builtin.file:
+        path: "{{ doc_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate custom HTML page using Jinja2 template
+      ansible.builtin.template:
+        src: index.html.j2
+        dest: "{{ doc_root }}/index.html"
+        mode: '0644'

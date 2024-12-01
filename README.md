@@ -1,2 +1,3 @@
-# ansible-advanced-kurs
-Ansible-Playbooks zum Udemy-Kurs "Ansible für Fortgeschrittene - Praxiskurs"
+# Ansible für Fortgeschrittene - Praxiskurs
+## Weiterführende Themen bzgl. IT-Automatisierung und Configuration Management - Optimierung, Security, Debugging uvm.
+Dieses Repository enthält Dateien, die im Rahmen des Udemy-Kurses "Ansible für Fortgeschrittene - Praxiskurs" verwendet werden.

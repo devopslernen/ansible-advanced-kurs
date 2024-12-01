@@ -1,0 +1,99 @@
+- name: Setup Lab Environment
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    ssh_public_key: "/home/rec/.ssh/id_rsa.pub"
+  tasks:
+    - name: Update package cache and install required packages
+      delegate_to: localhost
+      ansible.builtin.package:
+        name:
+          - lxc
+          - lxc-utils
+          - lxc-templates
+          - python3-lxc
+        state: present
+        update_cache: true
+
+    - name: Create LXC containers for all services
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        state: started
+        template: ubuntu
+        template_options: "--release noble"
+        container_log: true
+        container_config:
+          - "lxc.start.auto = 1"
+
+    - name: Set root password for the containers
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: bash -c "echo 'root:test' | chpasswd"
+
+    - name: Create ansible inside containers and set the password
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: |
+          useradd -m -s /bin/bash ansible
+          chown -R ansible:ansible /home/ansible
+          echo "ansible:test" | chpasswd
+
+    - name: Add ssh key for ansible user
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: |
+          mkdir -p /home/ansible/.ssh
+          echo "{{ lookup('file', ssh_public_key) }}" | tee -a /home/ansible/.ssh/authorized_keys
+          chown -R ansible:ansible /home/ansible/.ssh
+          chmod 600 /home/ansible/.ssh/authorized_keys
+
+    - name: Allow ansible user to use sudo
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: |
+          echo "ansible ALL=(ALL) ALL" > /etc/sudoers.d/ansible
+          chmod 440 /etc/sudoers.d/ansible
+
+    - name: Disable SSH root login and disable password authentication
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: |
+          sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+          sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+          systemctl restart ssh
+
+    - name: Set static IP for each container
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: |
+          cat <<EOF > /etc/netplan/10-lxc.yaml
+          network:
+            version: 2
+            ethernets:
+              eth0:
+                dhcp4: no
+                addresses:
+                  - {{ ansible_host }}/24
+                routes:
+                  - to: 0.0.0.0/0
+                    via: 10.0.3.1
+                nameservers:
+                  addresses:
+                    - 1.1.1.1
+                    - 1.0.0.1
+          EOF
+
+    # netplan apply was not available within the Ubuntu LXC: Failed to send reload request: No such file or directory
+    - name: Reboot the container to apply the new netplan configuration
+      delegate_to: localhost
+      community.general.lxc_container:
+        name: "{{ inventory_hostname }}"
+        container_command: "reboot"

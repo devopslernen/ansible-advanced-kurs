@@ -1,0 +1,9 @@
+---
+backend_name: demo-webapp  # noqa: var-naming
+nginx_remove_default_vhost: true  # noqa: var-naming
+nginx_upstreams:  # noqa: var-naming
+  - name: "{{ backend_name }}"
+    # strategy: "ip_hash" # default: round robin
+    servers:
+      - "10.0.3.101"
+      - "10.0.3.102"
